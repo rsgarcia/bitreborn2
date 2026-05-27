@@ -8,6 +8,7 @@ import { CyberBackground } from '../systems/CyberBackground.js';
 import { ParticleBurst } from '../systems/Particles.js';
 
 const STARTING_HEARTS = 2;
+const PLATFORM_VISIBILITY_DECLARATION = 'const visibilidadePlataforma = true;';
 
 export class LevelThreeScene extends Phaser.Scene {
   constructor() {
@@ -20,6 +21,8 @@ export class LevelThreeScene extends Phaser.Scene {
     this.nearFinalTerminal = false;
     this.platformsLocked = false;
     this.showingConstDialog = false;
+    this.constDialogInput = '';
+    this.constDialogFeedback = '';
     this.hearts = STARTING_HEARTS;
 
     this.physics.world.setBounds(0, 0, LEVEL_THREE.width, LEVEL_THREE.height);
@@ -59,6 +62,11 @@ export class LevelThreeScene extends Phaser.Scene {
       interact: Phaser.Input.Keyboard.KeyCodes.E,
       enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
       escape: Phaser.Input.Keyboard.KeyCodes.ESC
+    });
+
+    this.input.keyboard.on('keydown', this.handleConstDialogKeyDown, this);
+    this.events.once('shutdown', () => {
+      this.input.keyboard.off('keydown', this.handleConstDialogKeyDown, this);
     });
   }
 
@@ -222,7 +230,7 @@ export class LevelThreeScene extends Phaser.Scene {
 
     if (this.nearStartTerminal && !this.platformsLocked) {
       this.interactionText.setVisible(true);
-      this.interactionText.setText('Pressione E para fixar const plataforma = true');
+      this.interactionText.setText('Pressione E para declarar a visibilidade constante das plataformas');
       this.interactionText.setPosition(this.startTerminal.x - 70, this.startTerminal.y - 34);
 
       if (Phaser.Input.Keyboard.JustDown(this.keys.interact)) {
@@ -258,20 +266,17 @@ export class LevelThreeScene extends Phaser.Scene {
 
   openConstDialog() {
     this.showingConstDialog = true;
+    this.constDialogInput = '';
+    this.constDialogFeedback = '';
     this.dialogLayer.setVisible(true);
+    this.updateConstDialogText();
     this.messageText.setText('');
     this.player.sprite.body.setVelocity(0, 0);
   }
 
   handleConstDialogInput() {
-    if (Phaser.Input.Keyboard.JustDown(this.keys.enter) || Phaser.Input.Keyboard.JustDown(this.keys.interact)) {
-      this.platformsLocked = true;
-      this.showingConstDialog = false;
-      this.dialogLayer.setVisible(false);
-      this.messageText.setText('const plataforma = true; plataformas estabilizadas.');
-      this.statusText.setText('✓ PLATAFORMAS CONSTANTES');
-      this.statusText.setColor('#00ff50');
-      this.updateDynamicPlatforms(Number.POSITIVE_INFINITY);
+    if (Phaser.Input.Keyboard.JustDown(this.keys.enter)) {
+      this.submitConstDialogInput();
       return;
     }
 
@@ -279,6 +284,55 @@ export class LevelThreeScene extends Phaser.Scene {
       this.showingConstDialog = false;
       this.dialogLayer.setVisible(false);
     }
+  }
+
+  handleConstDialogKeyDown(event) {
+    if (!this.showingConstDialog) {
+      return;
+    }
+
+    if (event.key === 'Backspace') {
+      this.constDialogInput = this.constDialogInput.slice(0, -1);
+      this.constDialogFeedback = '';
+      this.updateConstDialogText();
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === 'Escape') {
+      return;
+    }
+
+    if (event.key.length === 1 && this.constDialogInput.length < 48) {
+      this.constDialogInput += event.key;
+      this.constDialogFeedback = '';
+      this.updateConstDialogText();
+    }
+  }
+
+  submitConstDialogInput() {
+    if (this.normalizeConstDialogInput(this.constDialogInput) === this.normalizeConstDialogInput(PLATFORM_VISIBILITY_DECLARATION)) {
+      this.platformsLocked = true;
+      this.showingConstDialog = false;
+      this.dialogLayer.setVisible(false);
+      this.messageText.setText(`${PLATFORM_VISIBILITY_DECLARATION} Plataformas estabilizadas.`);
+      this.statusText.setText('✓ PLATAFORMAS CONSTANTES');
+      this.statusText.setColor('#00ff50');
+      this.updateDynamicPlatforms(Number.POSITIVE_INFINITY);
+      return;
+    }
+
+    this.constDialogFeedback = 'Linha incorreta. Declare uma constante verdadeira para a visibilidade.';
+    this.updateConstDialogText();
+  }
+
+  normalizeConstDialogInput(value) {
+    return value.trim().replace(/\s+/g, '');
+  }
+
+  updateConstDialogText() {
+    const cursor = Date.now() % 1000 < 500 ? '|' : '';
+    this.constDialogInputText?.setText(`${this.constDialogInput}${cursor}`);
+    this.constDialogFeedbackText?.setText(this.constDialogFeedback);
   }
 
   createHud() {
@@ -362,7 +416,7 @@ export class LevelThreeScene extends Phaser.Scene {
         .text(
           480,
           278,
-          'As plataformas estão alternando entre visível/com colisão e invisível/sem colisão.\nDeseja alterar o valor de visibilidade para uma constante?',
+          'As plataformas estão alternando entre visível/com colisão e invisível/sem colisão.\nDigite uma linha que declare que a visibilidade das plataformas é constante e verdadeira.',
           {
             fontFamily: FONT.family,
             fontSize: '18px',
@@ -376,16 +430,33 @@ export class LevelThreeScene extends Phaser.Scene {
     );
     this.dialogLayer.add(
       this.add
-        .text(480, 360, 'const plataforma = true;', {
+        .text(196, 352, '_____', {
           fontFamily: FONT.family,
           fontSize: '28px',
           color: '#ffdc00'
         })
-        .setOrigin(0.5)
+        .setOrigin(0, 0.5)
     );
+    this.dialogLayer.add(this.add.rectangle(276, 336, 510, 40, 0x002814, 1).setOrigin(0).setStrokeStyle(1, COLORS.green));
+    this.constDialogInputText = this.add.text(288, 352, '', {
+      fontFamily: FONT.family,
+      fontSize: '22px',
+      color: '#00ffdc'
+    }).setOrigin(0, 0.5);
+    this.dialogLayer.add(this.constDialogInputText);
+    this.constDialogFeedbackText = this.add
+      .text(480, 395, '', {
+        fontFamily: FONT.family,
+        fontSize: '15px',
+        color: '#ff3250',
+        align: 'center',
+        wordWrap: { width: 660 }
+      })
+      .setOrigin(0.5);
+    this.dialogLayer.add(this.constDialogFeedbackText);
     this.dialogLayer.add(
       this.add
-        .text(480, 422, '[ ENTER/E confirmar ]    [ ESC cancelar ]', {
+        .text(480, 422, '[ ENTER confirmar ]    [ ESC cancelar ]', {
           fontFamily: FONT.family,
           fontSize: '18px',
           color: '#00ff50'

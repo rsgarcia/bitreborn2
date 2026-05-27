@@ -3,6 +3,7 @@ import { BootScene } from '../scenes/BootScene.js';
 import { PreloadScene } from '../scenes/PreloadScene.js';
 import { GameScene } from '../scenes/GameScene.js';
 import { IntroScene } from '../scenes/IntroScene.js';
+import { JavaScriptIntroScene } from '../scenes/JavaScriptIntroScene.js';
 import { LevelOneScene } from '../scenes/LevelOneScene.js';
 import { LevelTwoScene } from '../scenes/LevelTwoScene.js';
 import { LevelThreeScene } from '../scenes/LevelThreeScene.js';
@@ -34,6 +35,7 @@ export const gameConfig = {
     PreloadScene,
     GameScene,
     IntroScene,
+    JavaScriptIntroScene,
     LevelOneScene,
     LevelTwoScene,
     LevelThreeScene,

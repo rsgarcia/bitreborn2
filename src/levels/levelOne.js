@@ -35,19 +35,8 @@ export const LEVEL_ONE = {
 };
 
 export const INTRO_LINES = [
-  'Era uma noite comum.',
-  'Você abria a décima aba de IA para concluir',
-  'mais uma tarefa da faculdade...',
-  '',
-  'De repente — um raio atinge seu computador.',
-  '',
-  'Você é sugado para dentro da máquina.',
-  '',
-  'Ao acordar: um mundo de 0s e 1s.',
-  'Dominado por uma Inteligência Artificial central.',
-  '',
-  'Para voltar, você precisa APRENDER A PROGRAMAR.',
-  'Construa o stream de retorno. Volte para casa.',
+  'Para voltar à sua realidade, você precisa APRENDER A PROGRAMAR EM JAVASCRIPT.',
+  'construa o stream de retorno. Volte para casa.',
   '',
   '[ ENTER para começar a Fase 1 ]'
 ];
